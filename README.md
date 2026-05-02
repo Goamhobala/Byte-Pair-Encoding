@@ -4,7 +4,7 @@ README.md
 
 A Python tool to perform byte-pair encoding on a latin-script text data in the `.jsonl` format.
 
-The tool expects data of the format:
+The tool expects data in this format:
 
 ```json
 {text: "Maolah kako tisowanan!", ... other fields},
