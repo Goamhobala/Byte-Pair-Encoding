@@ -46,6 +46,12 @@ class BPE:
             self.__merge(t1, t2)
 
     def __merge(self, t1, t2):
+        """
+        naviely merge all occurrences of t1 and t2 in word tuples.
+        
+        Args:
+            t1, t2: Tuple elements to merge
+        """
         new_word_freq = defaultdict(int)
         for word_tuple, freq in self.word_freq.items():
             i = 0
@@ -64,6 +70,12 @@ class BPE:
         
     
     def __update_pairs(self):
+        """
+        Naive update pairs counter based on current word frequencies.
+        
+        Returns:
+            Updated pairs counter
+        """
         pairs = Counter()
         for word_tuple, freq in self.word_freq.items():
             for i in range(len(word_tuple) - 1):
@@ -83,8 +95,10 @@ class BPE:
         #normalise text to get rid of unicode variations
         line_generator = self.__read_jsonl(input_file)
         word_map = {}
-        for word_tuple, freq in word_freq.items():
-            word_map[" ".join(word_tuple)] = self.__encode_word(word_tuple)
+        for line in line_generator:
+            for token in line:
+                word_tuple = tuple(token + "_")
+                word_map[" ".join(word_tuple)] = self.__encode_word(word_tuple)
         
         output = ""
         for line in corpus:
@@ -94,6 +108,18 @@ class BPE:
                     output += " ".join(word_map[token]) + " "
             output = output.strip() + "\n"
         return output
+    
+    def __encode_word(self, word):
+        """
+        Encode a single word using the trained BPE model.
+        
+        Args:
+            word: Tuple of characters representing a word
+            
+        Returns:
+            List of BPE tokens for the word
+        """
+        pass
     
     def decode(self, tokens):
         pass
