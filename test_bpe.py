@@ -4,6 +4,7 @@ import os
 import unittest
 from typing import List
 from bpe import BPE
+import bpe
 
 
 def make_jsonl(lines: List[str]) -> str:
@@ -146,8 +147,18 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(self.bpe.merges, {})
 
 
-class TestEncodeWord(unittest.TestCase):
+class TestEncode(unittest.TestCase):
     """Tests for __encode_word once implemented."""
+    
+    def setUp(self):
+        # "ab ab c" → tokens: ["ab", "ab", "c"]
+        # word_freq: {('a','b','_'): 2, ('c','_'): 1}
+        # encoding: ab_ ab_ c_
+        self.path = make_jsonl(["ab ab c"])
+        self.bpe = BPE(self.path)
+
+    def tearDown(self):
+        os.unlink(self.path)
 
     def _make_trained_bpe(self, text: str, num_merge: int) -> BPE:
         path = make_jsonl([text])
@@ -166,6 +177,11 @@ class TestEncodeWord(unittest.TestCase):
         bpe = self._make_trained_bpe("abab abab", 10)
         result = bpe._BPE__encode_word(tuple("abab" + "_"))
         self.assertIsInstance(result, tuple)
+        
+    def test_encode_corpus(self):
+        self.bpe.train(10)
+        result = self.bpe.encode(self.path) 
+        self.assertEqual(result, "ab_ ab_ c_\n")
 
 
 if __name__ == "__main__":

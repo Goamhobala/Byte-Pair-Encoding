@@ -14,7 +14,7 @@ class BPE:
         line_generator = self.__read_jsonl(input_file)
         
         for line in line_generator:
-            for token in line:
+            for token in line.split():
                 chars = tuple(token + "_")
                 self.word_freq[chars] += 1
         
@@ -30,7 +30,7 @@ class BPE:
         with open(input_file, "r") as f:
             for line in f:
                 datum = json.loads(line)
-                yield unicodedata.normalize(normalisation, datum["text"]).split()
+                yield unicodedata.normalize(normalisation, datum["text"])
                 
     
     def train(self, num_merge):
@@ -93,21 +93,22 @@ class BPE:
             Encoded tokens
         """
         #normalise text to get rid of unicode variations
-        line_generator = self.__read_jsonl(input_file)
         word_map = {}
-        for line in line_generator:
-            for token in line:
-                word_tuple = tuple(token + "_")
-                word_map[" ".join(word_tuple)] = self.__encode_word(word_tuple)
-        
-        output = ""
-        for line in corpus:
-            tokens = line.split()
-            for token in tokens:
-                if token in word_map:
-                    output += " ".join(word_map[token]) + " "
-            output = output.strip() + "\n"
-        return output
+        output_lines = []
+        for line in self.__read_jsonl(input_file):
+            encoded_sentence = []
+            for token in line.split():
+                
+                if token not in word_map:
+                    word_tuple = tuple(token + "_")
+                    word_map[token] = self.__encode_word(word_tuple)
+                
+                encoded_sentence.append(" ".join(word_map[token]))
+            
+            output_lines.append(" ".join(encoded_sentence))
+            
+        # Join everything at the very end
+        return "\n".join(output_lines) + "\n"
     
     def __encode_word(self, word):
         """
@@ -162,5 +163,7 @@ if __name__ == "__main__":
     # args = parser.parse_args()
     bpe = BPE("data/xho/train.jsonl")
     bpe.train(1000)
-    print(bpe.merges)
+    
+    result = bpe.encode("data/xho/dev.jsonl")
+    print(result)
     
