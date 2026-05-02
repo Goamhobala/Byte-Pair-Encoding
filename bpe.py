@@ -1,29 +1,38 @@
 # bpe.py
 import json
 from pickle import FALSE
-from unicodedata import normalize
+import unicodedata 
 from collections import Counter, defaultdict
 import argparse
 
 class BPE:
     def __init__(self, input_file):
-        self.merges = []
+        self.merges = {}
         self.pairs = Counter()
         self.vocab = set()
         self.word_freq = defaultdict(int)
-        with open(input_file, "r") as f:
-            for line in f:
-                datum = json.loads(line)
-                text_split = (normalize("NFC", datum["text"])).split()
-                for token in text_split:
-                    chars = tuple(token + "_")
-                    self.word_freq[chars] += 1
+        line_generator = self.__read_jsonl(input_file)
+        
+        for line in line_generator:
+            for token in line:
+                chars = tuple(token + "_")
+                self.word_freq[chars] += 1
         
         for word_tuple, freq in self.word_freq.items():
             self.vocab.update(word_tuple)
             for i in range(len(word_tuple) - 1):
                 self.pairs[(word_tuple[i], word_tuple[i + 1])] += freq
-        
+                
+    def __read_jsonl(self, input_file, normalisation="NFC"):
+        """
+        Read JSONL file as a generator that yields pretokenised lines one line at a time
+        """
+        with open(input_file, "r") as f:
+            for line in f:
+                datum = json.loads(line)
+                yield unicodedata.normalize(normalisation, datum["text"]).split()
+                
+    
     def train(self, num_merge):
         for k in range(num_merge):
             if not self.pairs:
@@ -32,11 +41,10 @@ class BPE:
             # Reconstruct pairs from word_freq
             # most_common(1) returns [((t1, t2), count)]
             t1, t2 = self.pairs.most_common(1)[0][0]
-            self.merges.append((t1, t2))
+            # merge stores the priority so the right merge is applied. Use a dict for O(1)
+            self.merges[(t1, t2)] = k
             self.__merge(t1, t2)
-    
-        pass
-    
+
     def __merge(self, t1, t2):
         new_word_freq = defaultdict(int)
         for word_tuple, freq in self.word_freq.items():
@@ -62,10 +70,32 @@ class BPE:
                 pairs[(word_tuple[i], word_tuple[i + 1])] += freq
         return pairs
     
-    def encode():
-        pass
+    def encode(self, input_file):
+        """
+        Encode text using the trained BPE model.
+        
+        Args:
+            input_file: Path to the input file containing text
+            
+        Returns:
+            Encoded tokens
+        """
+        #normalise text to get rid of unicode variations
+        line_generator = self.__read_jsonl(input_file)
+        word_map = {}
+        for word_tuple, freq in word_freq.items():
+            word_map[" ".join(word_tuple)] = self.__encode_word(word_tuple)
+        
+        output = ""
+        for line in corpus:
+            tokens = line.split()
+            for token in tokens:
+                if token in word_map:
+                    output += " ".join(word_map[token]) + " "
+            output = output.strip() + "\n"
+        return output
     
-    def decode():
+    def decode(self, tokens):
         pass
     
     # def __merge(self, t1, t2):
