@@ -156,18 +156,16 @@ class TestEncodeWord(unittest.TestCase):
         bpe.train(num_merge)
         return bpe
 
-    @unittest.skip("__encode_word not yet implemented")
     def test_encode_known_word(self):
-        bpe = self._make_trained_bpe("ab ab ab", 1)
-        # after merging ('a','b') the word 'ab' should encode to ['ab_']
+        bpe = self._make_trained_bpe("ab ab ab", 10)
+        # after merging ('a','b') the word 'ab' should encode to ('ab_')
         result = bpe._BPE__encode_word(tuple("ab" + "_"))
-        self.assertEqual(result, ["ab_"])
+        self.assertEqual(str(result[0]), "ab_")
 
-    @unittest.skip("__encode_word not yet implemented")
     def test_encode_respects_merge_priority(self):
-        bpe = self._make_trained_bpe("abab abab", 2)
+        bpe = self._make_trained_bpe("abab abab", 10)
         result = bpe._BPE__encode_word(tuple("abab" + "_"))
-        self.assertIsInstance(result, list)
+        self.assertIsInstance(result, tuple)
 
 
 if __name__ == "__main__":

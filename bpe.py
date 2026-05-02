@@ -1,6 +1,6 @@
 # bpe.py
 import json
-from pickle import FALSE
+from math import inf
 import unicodedata 
 from collections import Counter, defaultdict
 import argparse
@@ -119,50 +119,42 @@ class BPE:
         Returns:
             List of BPE tokens for the word
         """
-        pass
+
+        word = list(word)
+
+       
+       # nothing to merge if word is a single char
+        while len(word) > 1:
+            new_word = []
+            pairs = {}
+            i = 0
+            j = 0
+            while i < len(word) - 1:
+                pairs[(word[i], word[i + 1])] = self.merges.get((word[i], word[i + 1]), float('inf'))
+                i += 1
+
+            min_pair = min(pairs, key=pairs.get)
+            if pairs[min_pair] == float('inf'):
+                break
+
+            while j < len(word):
+                if j == len(word) - 1:
+                    new_word.append(word[j])
+                    break
+                
+                if word[j] == min_pair[0] and word[j + 1] == min_pair[1]:
+                    new_word.append(min_pair[0] + min_pair[1])
+                    j += 2
+                else:
+                    new_word.append(word[j])
+                    j += 1
+            word = new_word
+        
+        return tuple(word)
+                
     
     def decode(self, tokens):
         pass
-    
-    # def __merge(self, t1, t2):
-    #     self.vocab.add(t1 + t2)
-    #     # Can't mutate the dict while iteratingg
-    #     new_word_freq = defaultdict(int)
-    #     for word_tuple, freq in self.word_freq.items():
-    #         i = 0
-    #         new_word = []
-    #         while (i < len(word_tuple)):
-    #             if i == len(word_tuple) - 1:
-    #                 # handle last char
-    #                 new_word.append(word_tuple[i])
-    #                 break
-                
-    #             if word_tuple[i] == t1 and word_tuple[i + 1] == t2:
-    #                 if (i - 1) >= 0:
-    #                     # update pairs to remove old pair and add new pair
-    #                     self.pairs[word_tuple[i - 1], t1] -= freq
-    #                     self.pairs[(word_tuple[i - 1], t1 + t2)] += freq
-    #                 if (i + 2) < len(word_tuple):
-    #                     # update pairs to remove old pair and add new pair
-    #                     self.pairs[t2, word_tuple[i + 2]] -= freq
-    #                     self.pairs[(t1 + t2, word_tuple[i + 2])] += freq
-                    
-    #                 new_word.append(t1 + t2)
-    #                 # We use subtraction instead of popping here to handle the aaa edge case
-    #                 self.pairs[(t1, t2)] -= freq
-    #                 # Skip both chars consumed
-    #                 i += 2
-    #             else:
-    #                 new_word.append(word_tuple[i])
-    #                 i += 1
-    #         new_word_freq[tuple(new_word)] = freq
-        
-    #     self.word_freq = new_word_freq
-        
-    #     #strip away the 0 counts
-    #     self.pairs = +self.pairs
-        
-
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser()
