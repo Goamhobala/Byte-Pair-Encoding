@@ -119,8 +119,8 @@ class TestTrain(unittest.TestCase):
         os.unlink(self.path)
 
     def test_merges_recorded(self):
-        self.bpe.train(1)
-        self.assertEqual(len(self.bpe.merges), 1)
+        self.bpe.train(10)
+        self.assertEqual(len(self.bpe.merges), 7 - len(self.bpe.vocab))
 
     def test_merge_order_is_priority(self):
         self.bpe.train(3)
@@ -130,7 +130,7 @@ class TestTrain(unittest.TestCase):
 
     def test_most_frequent_merged_first(self):
         # ('a','a') count=4, ('a','b')=2, ('b','_')=2
-        self.bpe.train(1)
+        self.bpe.train(10)
         self.assertIn(("a", "a"), self.bpe.merges)
 
     def test_train_stops_when_no_pairs(self):

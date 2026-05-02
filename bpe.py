@@ -33,7 +33,22 @@ class BPE:
                 yield unicodedata.normalize(normalisation, datum["text"])
                 
     
-    def train(self, num_merge):
+    def train(self, vocab_size, cache_trained_bpe=True, cached_bpe_path="trained_bpe.json"):
+        if cache_trained_bpe:
+            try:
+                with open(cached_bpe_path, "r") as f:
+                    # Load the list from JSON
+                    saved_merges = json.load(f)
+                    
+                    # Rebuild the dictionary with proper Tuple keys!
+                    self.merges = {(t1, t2): rank for t1, t2, rank in saved_merges}
+                print("Loaded trained BPE from cache")
+                return
+            except FileNotFoundError:
+                print("No cache found. Starting training...")
+                pass
+        
+        num_merge = vocab_size - len(self.vocab) # to get the number of merges we can do
         for k in range(num_merge):
             if not self.pairs:
                 print(f"ran out of pairs at merge {k}!")
@@ -44,6 +59,14 @@ class BPE:
             # merge stores the priority so the right merge is applied. Use a dict for O(1)
             self.merges[(t1, t2)] = k
             self.__merge(t1, t2)
+        
+        if cache_trained_bpe:
+            with open(cached_bpe_path, "w") as f:
+                # Convert the Tuple-keyed dict into a safe List of Lists
+                # because JSON doesn't support tuple keys
+                merges_to_save = [[t1, t2, rank] for (t1, t2), rank in self.merges.items()]
+                json.dump(merges_to_save, f)
+        
 
     def __merge(self, t1, t2):
         """
@@ -158,12 +181,17 @@ class BPE:
         pass
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--file", type=str, required=True)
-    # args = parser.parse_args()
-    bpe = BPE("data/xho/train.jsonl")
-    bpe.train(1000)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_file", type=str, required=True)
+    parser.add_argument("--output_file", type=str, required=True)
+    parser.add_argument("--vocab_size", type=int, default=1000)
+    parser.add_argument("--cache_trained_bpe", type=bool, default=True)
+    parser.add_argument("--cached_bpe_path", type=str, default="trained_bpe.json")
+    args = parser.parse_args()
+    bpe = BPE(args.input_file)
+    bpe.train(args.vocab_size, cache_trained_bpe=args.cache_trained_bpe, cached_bpe_path=args.cached_bpe_path)
     
-    result = bpe.encode("data/xho/dev.jsonl")
-    print(result)
+    result = bpe.encode(args.input_file)
+    with open(args.output_file, "w") as f:
+        f.write(result)
     
