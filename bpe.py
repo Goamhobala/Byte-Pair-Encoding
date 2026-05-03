@@ -34,6 +34,14 @@ class BPE:
                 
     
     def train(self, vocab_size, cache_trained_bpe=True, cached_bpe_path="trained_bpe.json"):
+        """
+        Train the BPE model.
+        
+        Args:
+            vocab_size (int): The target vocabulary size.
+            cache_trained_bpe (bool): Whether to cache the trained BPE merges.
+            cached_bpe_path (str): Path to cache the trained BPE merges.
+        """
         if cache_trained_bpe:
             try:
                 with open(cached_bpe_path, "r") as f:
@@ -184,6 +192,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_file", type=str, required=True)
     parser.add_argument("--output_file", type=str, required=True)
+    parser.add_argument("--encode_file", type=str, required=True)
     parser.add_argument("--vocab_size", type=int, default=1000)
     parser.add_argument("--cache_trained_bpe", type=bool, default=True)
     parser.add_argument("--cached_bpe_path", type=str, default="trained_bpe.json")
@@ -191,7 +200,7 @@ if __name__ == "__main__":
     bpe = BPE(args.input_file)
     bpe.train(args.vocab_size, cache_trained_bpe=args.cache_trained_bpe, cached_bpe_path=args.cached_bpe_path)
     
-    result = bpe.encode(args.input_file)
+    result = bpe.encode(args.encode_file)
     with open(args.output_file, "w") as f:
         f.write(result)
     
