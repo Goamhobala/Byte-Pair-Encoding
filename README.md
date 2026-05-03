@@ -17,11 +17,13 @@ The tool expects data in this format:
 **Example Usage:**
 
 ```python
-python3 bpe.py --input_file "data/xho/train.jsonl" --output_file "test.txt" --vocab_size 1000 --cached_bpe_path="./data/xho/bpe_cached.json"
+python3 bpe.py --train_file "data/xho/train.jsonl" --output_file "test.jsonl" --vocab_size 1000 --cached_bpe_path="./data/xho/bpe_cached.json" --output_format "jsonl" --encode_file "data/xho/train.jsonl"
 ```
 
-- `--input_file`: path to the input file
+- `--train_file`: path to training file
 - `--output_file`: path to output the tokenised text
 - `--vocab_size`: the target vocabulary size, default is 1000
 - `--cache_trained_bpe`: default to true
 - `--cached_bpe_path`: path to cache the trained bpe merges.
+- `--encode_file`: path to the file to be encoded
+- `--output_format`: either as a `jsonl` that reflects the original format, or `txt` as a wall of text

@@ -14,7 +14,7 @@ class BPE:
         line_generator = self.__read_jsonl(input_file)
         
         for line in line_generator:
-            for token in line.split():
+            for token in line["text"].split():
                 chars = tuple(token + "_")
                 self.word_freq[chars] += 1
         
@@ -30,7 +30,7 @@ class BPE:
         with open(input_file, "r") as f:
             for line in f:
                 datum = json.loads(line)
-                yield unicodedata.normalize(normalisation, datum["text"])
+                yield {**datum, "text": unicodedata.normalize(normalisation, datum["text"])}
                 
     
     def train(self, vocab_size, cache_trained_bpe=True, cached_bpe_path="trained_bpe.json"):
@@ -113,31 +113,37 @@ class BPE:
                 pairs[(word_tuple[i], word_tuple[i + 1])] += freq
         return pairs
     
-    def encode(self, input_file):
+    def encode(self, input_file, output_format="text"):
         """
         Encode text using the trained BPE model.
-        
+
         Args:
             input_file: Path to the input file containing text
-            
+            output_format: "text" for a wall of text, "jsonl" to mirror the input format
+
         Returns:
             Encoded tokens
         """
         #normalise text to get rid of unicode variations
         word_map = {}
         output_lines = []
-        for line in self.__read_jsonl(input_file):
+        for datum in self.__read_jsonl(input_file):
             encoded_sentence = []
-            for token in line.split():
-                
+            for token in datum["text"].split():
+
                 if token not in word_map:
                     word_tuple = tuple(token + "_")
                     word_map[token] = self.__encode_word(word_tuple)
-                
+
                 encoded_sentence.append(" ".join(word_map[token]))
-            
-            output_lines.append(" ".join(encoded_sentence))
-            
+
+            encoded_text = " ".join(encoded_sentence)
+
+            if output_format == "jsonl":
+                output_lines.append(json.dumps({**datum, "text": encoded_text}))
+            else:
+                output_lines.append(encoded_text)
+
         # Join everything at the very end
         return "\n".join(output_lines) + "\n"
     
@@ -190,17 +196,18 @@ class BPE:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_file", type=str, required=True)
+    parser.add_argument("--train_file", type=str, required=True)
     parser.add_argument("--output_file", type=str, required=True)
     parser.add_argument("--encode_file", type=str, required=True)
     parser.add_argument("--vocab_size", type=int, default=1000)
     parser.add_argument("--cache_trained_bpe", type=bool, default=True)
     parser.add_argument("--cached_bpe_path", type=str, default="trained_bpe.json")
+    parser.add_argument("--output_format", type=str, default="jsonl", choices=["text", "jsonl"])
     args = parser.parse_args()
-    bpe = BPE(args.input_file)
+    bpe = BPE(args.train_file)
     bpe.train(args.vocab_size, cache_trained_bpe=args.cache_trained_bpe, cached_bpe_path=args.cached_bpe_path)
-    
-    result = bpe.encode(args.encode_file)
+
+    result = bpe.encode(args.encode_file, output_format=args.output_format)
     with open(args.output_file, "w") as f:
         f.write(result)
     

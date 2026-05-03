@@ -15,4 +15,5 @@ data/
 data/*
 
 *.pdf
+*.bib
 results/
