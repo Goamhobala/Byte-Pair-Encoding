@@ -37,10 +37,10 @@ class BPE:
         if cache_trained_bpe:
             try:
                 with open(cached_bpe_path, "r") as f:
-                    # Load the list from JSON
+                    # Load the list from json
                     saved_merges = json.load(f)
                     
-                    # Rebuild the dictionary with proper Tuple keys!
+                    # Rebuild the dictionary with tuple keys
                     self.merges = {(t1, t2): rank for t1, t2, rank in saved_merges}
                 print("Loaded trained BPE from cache")
                 return
