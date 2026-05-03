@@ -17,3 +17,5 @@ data/*
 *.pdf
 *.bib
 results/
+*.txt
+*.jsonl
